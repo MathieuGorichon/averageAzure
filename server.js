@@ -22,21 +22,28 @@ app.post('/add/:message', function (req, res) {
 });
 
 app.get('/getmessage', function(req, res) {
-	var queueService = azure.createQueueService(account, access_key);
-	var queueName = 'taskqueue';
-	queueService.getMessage(queueName, function(error, serverMessage) {
-		if (!error) {
-			console.log(serverMessage);
-			res.send(serverMessage);
-	 
-			queueService.deleteMessage(queueName, serverMessages[0].messageId, serverMessage.popReceipt, function(error) {
-				if (!error) {
-				// Message deleted
-				}
-			});
-		}
-	});
+	getMessageService().then(result => res.send(result));
 });
+
+const getMessageService = function() {
+	return new Promise((resolve, reject) => {
+		var queueService = azure.createQueueService(account, access_key);
+		var queueName = 'taskqueue';
+		queueService.getMessage(queueName, function(error, serverMessage) {
+			if (!error) {
+                queueService.deleteMessage(queueName, serverMessage.messageId, serverMessage.popReceipt, function(error) {
+					if (!error) {
+					// Message deleted
+					}
+				});
+				resolve(serverMessage);
+			} else {
+				reject(error);
+			}
+		});
+    });
+}
+
 
 function normalizePort(val) {
     var port = parseInt(val, 10);
