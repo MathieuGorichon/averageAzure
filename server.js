@@ -24,12 +24,12 @@ app.post('/add/:message', function (req, res) {
 app.get('/getmessage', function(req, res) {
 	var queueService = azure.createQueueService(account, access_key);
 	var queueName = 'taskqueue';
-	queueService.getMessages(queueName, function(error, serverMessages) {
+	queueService.getMessage(queueName, function(error, serverMessage) {
 		if (!error) {
-			console.log(serverMessages[0].messageText);
-			res.send(serverMessages [0].messageText);
+			console.log(serverMessage);
+			res.send(serverMessage);
 	 
-			queueService.deleteMessage(queueName, serverMessages[0].messageId, serverMessages[0].popReceipt, function(error) {
+			queueService.deleteMessage(queueName, serverMessages[0].messageId, serverMessage.popReceipt, function(error) {
 				if (!error) {
 				// Message deleted
 				}
