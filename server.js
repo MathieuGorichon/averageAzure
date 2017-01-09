@@ -50,7 +50,6 @@ function normalizePort(val) {
     return false;
 }
 
-//app.listen( normalizePort(process.env.PORT || '3000'), function () {
-app.listen(process.env.PORT || 3000), function() {
+app.listen( normalizePort(process.env.PORT || '3000'), function () {
   console.log('Running on port ' + normalizePort(process.env.PORT || '3000'));
 });
