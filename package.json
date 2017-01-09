@@ -3,7 +3,8 @@
   "version": "0.0.1",
   "description": "average with azure",
   "dependencies": {
-    "azure-storage": "^1.0.0"
+    "azure-storage": "^1.0.0",
+	"express": ""
   },
   "engines": {
     "node": "6.9.1"
