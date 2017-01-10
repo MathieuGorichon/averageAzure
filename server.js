@@ -7,30 +7,42 @@ const access_key = 'fWFWgqF9rQorp/iGlg05tRnV+8iHnbF8ANCGTDjFJxJSKIUMVzGEU9rq9GhG
 
 app.get('/', (req, res) => res.send('Running'));
 
-app.post('/add/:message', function (req, res) {
-	var queueService = azure.createQueueService(account, access_key);
-	queueService.createQueueIfNotExists('taskqueue', function(error) {
-		if (!error) {
-			queueService.createMessage('taskqueue', req.params.message, function(error) {
-				if (!error) {
-					console.log('message inserted: ' + req.params.message);
-					res.end();
-				}
-			});
-		}
-	});
+app.post('/add/:message', function(req, res) {
+	addMessageService('taskqueue', req.params.message)
+		.then(() => res.send('success'))
+		.catch(() => res.send('error'));
 });
 
 app.get('/getmessage', function(req, res) {
-	getMessageService().then(result => res.send(result));
+	getMessageService('taskqueue')
+		.then(result => res.send(result))
+		.catch(() => res.send('no more message'));
 });
 
-const getMessageService = function() {
+const addMessageService = function(queue, message) {
 	return new Promise((resolve, reject) => {
 		var queueService = azure.createQueueService(account, access_key);
-		var queueName = 'taskqueue';
+		queueService.createQueueIfNotExists(queue, function(error) {
+		if (!error) {
+			queueService.createMessage('taskqueue', message, function(error) {
+				if (!error) {
+					console.log('message inserted: ' + message);
+					resolve();
+				}
+			});
+		} else  {
+			reject(error);
+		}
+	});
+	})
+}
+
+const getMessageService = function(queue) {
+	return new Promise((resolve, reject) => {
+		var queueService = azure.createQueueService(account, access_key);
+		var queueName = queue;
 		queueService.getMessage(queueName, function(error, serverMessage) {
-			if (!error) {
+			if (!error && serverMessage) {
                 queueService.deleteMessage(queueName, serverMessage.messageId, serverMessage.popReceipt, function(error) {
 					if (!error) {
 					// Message deleted
@@ -44,6 +56,10 @@ const getMessageService = function() {
     });
 }
 
+const polling = function() {
+	console.log(new Date());
+}
+setInterval(polling, 1000);
 
 function normalizePort(val) {
     var port = parseInt(val, 10);
