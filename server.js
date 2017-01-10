@@ -16,7 +16,7 @@ app.post('/add/:message', function(req, res) {
 app.get('/getmessage', function(req, res) {
 	getMessageService('taskqueue')
 		.then(result => res.send(result))
-		.catch(() => res.send('no more message'));
+		.catch(() => res.status(404).send('no more message'));
 });
 
 const addMessageService = function(queue, message) {
@@ -24,11 +24,11 @@ const addMessageService = function(queue, message) {
 		var queueService = azure.createQueueService(account, access_key);
 		queueService.createQueueIfNotExists(queue, function(error) {
 		if (!error) {
-			queueService.createMessage('taskqueue', message, function(error) {
+			queueService.createMessage(queue, message, function(error) {
 				if (!error) {
-					console.log('message inserted: ' + message);
+					console.log('message inserted in queue "' + queue + '" : ' + message);
 					resolve();
-				}
+				} else { reject(error) }
 			});
 		} else  {
 			reject(error);
@@ -48,17 +48,32 @@ const getMessageService = function(queue) {
 					// Message deleted
 					}
 				});
-				resolve(serverMessage);
+				resolve(serverMessage.messageText);
 			} else {
-				reject(error);
+				reject('no more message');
 			}
 		});
     });
 }
 
-const polling = function() {
-	console.log(new Date());
+const compute = function(expression)  {
+	return new Promise((resolve, reject) => {
+		try {
+			let evaluated = eval(expression);
+			resolve(evaluated.toString());
+		} catch (error) {
+			reject(error);
+		}
+	});
 }
+
+const polling = function() {
+	getMessageService('taskqueue')
+		.then(compute)
+		.then((evaluated) => addMessageService('resultqueue', evaluated))
+		.catch(error => console.log(error));
+}
+
 setInterval(polling, 1000);
 
 function normalizePort(val) {
